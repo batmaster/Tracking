@@ -1,5 +1,7 @@
 package com.bananalab.tracking.view;
 
+import android.content.Context;
+import android.content.Intent;
 import android.support.v7.widget.CardView;
 import android.support.v7.widget.RecyclerView;
 import android.util.Log;
@@ -10,6 +12,7 @@ import android.widget.TextView;
 
 import com.bananalab.tracking.R;
 import com.bananalab.tracking.model.Tracking;
+import com.bananalab.tracking.service.Preferences;
 
 import java.util.ArrayList;
 
@@ -18,9 +21,11 @@ import java.util.ArrayList;
  */
 public class ListsAdapter extends RecyclerView.Adapter<ListsAdapter.ViewHolder> {
 
+    private Context context;
     private ArrayList<Tracking> trackings;
 
-    public ListsAdapter(ArrayList<Tracking> trackings) {
+    public ListsAdapter(Context context, ArrayList<Tracking> trackings) {
+        this.context = context;
         this.trackings = trackings;
     }
 
@@ -35,10 +40,21 @@ public class ListsAdapter extends RecyclerView.Adapter<ListsAdapter.ViewHolder> 
 
     @Override
     public void onBindViewHolder(final ViewHolder holder, final int position) {
+
+        holder.cardView.setOnClickListener(new View.OnClickListener() {
+
+            @Override
+            public void onClick(View v) {
+                Intent intent = new Intent(context, MapActivity.class);
+                intent.putExtra("t_id", Preferences.getInt(context, Preferences.TRACKING_ID_TEMP));
+                context.startActivity(intent);
+            }
+        });
+
         holder.textViewTitle.setText(trackings.get(position).getTitle());
-        holder.textViewSession.setText(trackings.get(position).getSession());
-        holder.textViewDateTime.setText(trackings.get(position).getDatetime());
-        holder.textViewDistance.setText(trackings.get(position).getDistance());
+        holder.textViewElapse.setText(trackings.get(position).getElapseString());
+        holder.textViewDateTime.setText(trackings.get(position).getDate());
+        holder.textViewDistance.setText(trackings.get(position).getDistanceString());
     }
 
     @Override
@@ -51,7 +67,7 @@ public class ListsAdapter extends RecyclerView.Adapter<ListsAdapter.ViewHolder> 
         public CardView cardView;
 
         public TextView textViewTitle;
-        public TextView textViewSession;
+        public TextView textViewElapse;
         public TextView textViewDateTime;
         public TextView textViewDistance;
 
@@ -61,7 +77,7 @@ public class ListsAdapter extends RecyclerView.Adapter<ListsAdapter.ViewHolder> 
             cardView = (CardView) view.findViewById(R.id.cardView);
 
             textViewTitle = (TextView) view.findViewById(R.id.textViewTitle);
-            textViewSession = (TextView) view.findViewById(R.id.textViewSession);
+            textViewElapse = (TextView) view.findViewById(R.id.textViewElapse);
             textViewDateTime = (TextView) view.findViewById(R.id.textViewDateTime);
             textViewDistance = (TextView) view.findViewById(R.id.textViewDistance);
         }
