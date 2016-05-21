@@ -28,7 +28,9 @@ public class MapActivity extends Activity implements OnMapReadyCallback, Notifia
 
     private int t_id;
     private GoogleMap googleMap;
-    private ArrayList<Coordinate> coordinates;
+
+    public LatLng prevLoc;
+    public boolean firstZoom = true;
 
     @Override
     protected void onCreate(Bundle savedInstanceState) {
@@ -41,10 +43,8 @@ public class MapActivity extends Activity implements OnMapReadyCallback, Notifia
         mapFragment.getMapAsync(this);
     }
 
-    public LatLng prevLoc;
-
     @Override
-    public void onMapReady(GoogleMap googleMap) {
+    public void onMapReady(final GoogleMap googleMap) {
         this.googleMap = googleMap;
         if (ActivityCompat.checkSelfPermission(this, Manifest.permission.ACCESS_FINE_LOCATION) != PackageManager.PERMISSION_GRANTED && ActivityCompat.checkSelfPermission(this, Manifest.permission.ACCESS_COARSE_LOCATION) != PackageManager.PERMISSION_GRANTED) {
             Toast.makeText(getApplicationContext(), "Cannot open map because location permission is not granted.", Toast.LENGTH_SHORT).show();
@@ -55,38 +55,47 @@ public class MapActivity extends Activity implements OnMapReadyCallback, Notifia
 //        Location myLocation = googleMap.getMy/Location();
 //        googleMap.moveCamera(CameraUpdateFactory.newLatLng(new LatLng(myLocation.getLatitude(), myLocation.getLongitude())));
 
-        coordinates = DBHelper.getCoordinates(getApplicationContext(), t_id);
-        final LatLngBounds.Builder builder = new LatLngBounds.Builder();
 
-        for (int i = 0; i < coordinates.size(); i++) {
-            LatLng curLoc = new LatLng(coordinates.get(i).getLatitude(), coordinates.get(i).getLongitude());
-
-            if (prevLoc != null) {
-                googleMap.addPolyline(new PolylineOptions()
-                        .add(prevLoc, curLoc)
-                        .width(6)
-                        .color(Color.GREEN)
-                        .visible(true)
-                );
-            }
-            prevLoc = curLoc;
-
-            builder.include(curLoc);
-        }
-
-//        googleMap.moveCamera(CameraUpdateFactory.newLatLngBounds(builder.build(), 15));
-        googleMap.animateCamera(CameraUpdateFactory.newLatLngBounds(builder.build(), 64, 64, 32));
-
-        Log.d("DBH map", "onMapReady " + t_id + " " + coordinates.size());
         if (t_id == Preferences.getInt(getApplicationContext(), Preferences.TRACKING_ID_TEMP)) {
             DBHelper.setNotifiableMapActivity(MapActivity.this);
         }
+
+        googleMap.setOnMapLoadedCallback(new GoogleMap.OnMapLoadedCallback() {
+            @Override
+            public void onMapLoaded() {
+                ArrayList<Coordinate> coordinates = DBHelper.getCoordinates(getApplicationContext(), t_id);
+                final LatLngBounds.Builder builder = new LatLngBounds.Builder();
+                for (int i = 0; i < coordinates.size(); i++) {
+                    LatLng curLoc = new LatLng(coordinates.get(i).getLatitude(), coordinates.get(i).getLongitude());
+
+                    if (prevLoc != null) {
+                        googleMap.addPolyline(new PolylineOptions()
+                                .add(prevLoc, curLoc)
+                                .width(6)
+                                .color(Color.GREEN)
+                                .visible(true)
+                        );
+                    }
+                    prevLoc = curLoc;
+                    builder.include(curLoc);
+                }
+
+                Log.d("DBH map", "onMapReady " + t_id + " " + coordinates.size());
+
+                try {
+                    googleMap.animateCamera(CameraUpdateFactory.newLatLngBounds(builder.build(), 15));
+                    firstZoom = false;
+                } catch (IllegalStateException e) {
+                    e.printStackTrace();
+                    Toast.makeText(getApplicationContext(), "กำลังค้นหาตำแหน่ง", Toast.LENGTH_SHORT).show();
+                }
+            }
+        });
     }
     // TODO check again
     @Override
     public void notifyMap(Coordinate newCoordinate) {
-        coordinates.add(newCoordinate);
-        Log.d("DBH map", "notifyMap " + newCoordinate + " " + coordinates.size());
+        Log.d("DBH map", "notifyMap " + newCoordinate);
 
         LatLng curLoc = new LatLng(newCoordinate.getLatitude(), newCoordinate.getLongitude());
 
@@ -100,7 +109,14 @@ public class MapActivity extends Activity implements OnMapReadyCallback, Notifia
         }
 
         prevLoc = curLoc;
-
+        if (googleMap.getProjection().getVisibleRegion().latLngBounds.contains(curLoc)) {
+            if (firstZoom) {
+                googleMap.animateCamera(CameraUpdateFactory.newLatLngZoom(curLoc, 15));
+            }
+            else {
+                googleMap.animateCamera(CameraUpdateFactory.newLatLngZoom(curLoc, googleMap.getCameraPosition().zoom));
+            }
+        }
     }
 
     @Override

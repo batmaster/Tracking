@@ -15,6 +15,7 @@ import com.google.android.gms.maps.model.LatLng;
 
 import java.text.ParseException;
 import java.util.ArrayList;
+import java.util.Date;
 
 /**
  * Created by batmaster on 5/2/16 AD.
@@ -33,7 +34,7 @@ public class DBHelper extends SQLiteOpenHelper {
 
     @Override
     public void onCreate(SQLiteDatabase db) {
-        db.execSQL(String.format("CREATE TABLE trackings (id INTEGER PRIMARY KEY AUTOINCREMENT, title TEXT, description TEXT, date TEXT, distance REAL, elapse TEXT)"));
+        db.execSQL(String.format("CREATE TABLE trackings (id INTEGER PRIMARY KEY AUTOINCREMENT, title TEXT, description TEXT, date TEXT, distance REAL, elapse INTEGER, size INTEGER)"));
         db.execSQL(String.format("CREATE TABLE coordinates (id INTEGER PRIMARY KEY AUTOINCREMENT, t_id INTEGER, date TEXT, latitude REAL, longitude REAL, altitude REAL)"));
     }
 
@@ -41,6 +42,10 @@ public class DBHelper extends SQLiteOpenHelper {
 //    @Override
 //    public void onOpen(SQLiteDatabase db) {
 //        super.onOpen(db);
+//
+////        db.execSQL("ALTER TABLE trackings ADD COLUMN coordinates INTEGER");
+//
+////
 //        db.execSQL("DROP TABLE trackings");
 //        db.execSQL("DROP TABLE coordinates");
 //        onCreate(db);
@@ -67,6 +72,9 @@ public class DBHelper extends SQLiteOpenHelper {
         SQLiteDatabase db = that.getWritableDatabase();
         ContentValues values = new ContentValues();
         values.put("title", "recording...");
+        values.put("date", Preferences.SDF.format(new Date()));
+        values.put("elapse", -1);
+        values.put("distance", -1);
 
         int id = (int) db.insert("trackings", null, values);
 
@@ -103,14 +111,9 @@ public class DBHelper extends SQLiteOpenHelper {
      */
     public static void finishTracking(Context context, Tracking tracking) {
         DBHelper that = new DBHelper(context);
-
-
-
         SQLiteDatabase db = that.getWritableDatabase();
 
         int trackingTempId = Preferences.getInt(context, Preferences.TRACKING_ID_TEMP);
-
-
         ArrayList<Coordinate> coordinates = DBHelper.getCoordinates(context, trackingTempId);
 
         long elapse = 0;
@@ -140,8 +143,8 @@ public class DBHelper extends SQLiteOpenHelper {
         values.put("title", tracking.getTitle());
         values.put("description", tracking.getDescription());
         values.put("elapse", tracking.getElapse());
-        values.put("date", tracking.getDate());
         values.put("distance", tracking.getDistance());
+        values.put("size", coordinates.size());
 
         db.update("trackings", values, "id = ?", new String[] {Integer.toString(trackingTempId)});
 
@@ -179,13 +182,32 @@ public class DBHelper extends SQLiteOpenHelper {
         cursor.moveToFirst();
 
         while (!cursor.isAfterLast()) {
-            trackings.add(new Tracking(cursor.getInt(0), cursor.getString(1), cursor.getString(2), cursor.getString(3), cursor.getDouble(4), cursor.getLong(5)));
+            trackings.add(new Tracking(cursor.getInt(0), cursor.getString(1), cursor.getString(2), cursor.getString(3), cursor.getDouble(4), cursor.getLong(5), cursor.getInt(6)));
             cursor.moveToNext();
         }
 
         Log.d("DBH", "getTrackings " + trackings.size());
 
         return trackings;
+    }
+
+    public static Tracking getTracking(Context context, int t_id) {
+        DBHelper that = new DBHelper(context);
+        SQLiteDatabase db = that.getReadableDatabase();
+
+        Tracking tracking = null;
+
+        Cursor cursor = db.rawQuery(String.format("SELECT * FROM trackings WHERE id = %d ORDER BY id DESC", t_id), null);
+        cursor.moveToFirst();
+
+        while (!cursor.isAfterLast()) {
+            tracking = new Tracking(cursor.getInt(0), cursor.getString(1), cursor.getString(2), cursor.getString(3), cursor.getDouble(4), cursor.getLong(5), cursor.getInt(6));
+            cursor.moveToNext();
+        }
+
+        Log.d("DBH", "getTracking " + tracking);
+
+        return tracking;
     }
 
 }

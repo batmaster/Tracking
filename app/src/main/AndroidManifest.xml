@@ -34,9 +34,11 @@
             android:name="com.google.android.geo.API_KEY"
             android:value="AIzaSyCHO24wMHMQqfooMyTwoWfGktTESVyyix0" />
 
-        <activity android:name=".view.MapActivity"></activity>
+        <activity android:name=".view.MapActivity" />
 
         <service android:name=".service.LocationBackgroundService" />
+
+        <activity android:name=".view.DetailActivity"></activity>
     </application>
 
 </manifest>

@@ -89,11 +89,9 @@ public class MainActivity extends AppCompatActivity {
                     onResume();
                 }
                 else {
-                    Toast.makeText(getApplicationContext(), "Finish,...", Toast.LENGTH_SHORT).show();
-                    DBHelper.finishTracking(getApplicationContext(), new Tracking("ไปเชียงใหม่", "โดยรถทัวร์"));
 
-                    stopService(new Intent(getApplicationContext(), LocationBackgroundService.class));
-                    onResume();
+                    Intent intent = new Intent(getApplicationContext(), DetailActivity.class);
+                    startActivity(intent);
                 }
 
             }

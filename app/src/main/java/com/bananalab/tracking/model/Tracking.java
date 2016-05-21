@@ -15,6 +15,7 @@ public class Tracking {
     private long elapse;
     private String date;
     private double distance;
+    private int size;
 
     /**
      * When query from db.
@@ -23,14 +24,16 @@ public class Tracking {
      * @param elapse
      * @param date
      * @param distance
+     * @param size
      */
-    public Tracking(int id, String title, String description, String date, double distance, long elapse) {
+    public Tracking(int id, String title, String description, String date, double distance, long elapse, int size) {
         this.id = id;
         this.title = title;
         this.description = description;
         this.date = date;
         this.distance = distance;
         this.elapse = elapse;
+        this.size = size;
     }
 
     /**
@@ -41,7 +44,6 @@ public class Tracking {
     public Tracking(String title, String description) {
         this.title = title;
         this.description = description;
-        date = Preferences.SDF.format(new Date());
     }
 
     public int getId() {
@@ -77,6 +79,9 @@ public class Tracking {
     }
 
     public String getElapseString() {
+        if (distance == -1)
+            return "";
+
         long sec = elapse / 1000;
         if (sec < 60)
             return sec + " วินาที";
@@ -115,6 +120,9 @@ public class Tracking {
     }
 
     public String getDistanceString() {
+        if (distance == -1)
+            return "";
+
         double d = distance;
         if (d < 1000)
             return String.format("%.1f", d) + " เมตร";
@@ -132,5 +140,13 @@ public class Tracking {
 
     public void setDistance(double distance) {
         this.distance = distance;
+    }
+
+    public int getSize() {
+        return size;
+    }
+
+    public void setSize(int size) {
+        this.size = size;
     }
 }
