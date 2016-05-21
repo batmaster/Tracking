@@ -26,6 +26,10 @@
                 <category android:name="android.intent.category.LAUNCHER" />
             </intent-filter>
         </activity>
+        <activity android:name=".view.MapActivity" />
+        <activity
+            android:name=".view.DetailActivity"
+            android:windowSoftInputMode="stateVisible|adjustResize" />
 
         <meta-data
             android:name="com.google.android.gms.version"
@@ -34,11 +38,8 @@
             android:name="com.google.android.geo.API_KEY"
             android:value="AIzaSyCHO24wMHMQqfooMyTwoWfGktTESVyyix0" />
 
-        <activity android:name=".view.MapActivity" />
-
         <service android:name=".service.LocationBackgroundService" />
 
-        <activity android:name=".view.DetailActivity"></activity>
     </application>
 
 </manifest>

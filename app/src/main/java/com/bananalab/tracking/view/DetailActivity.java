@@ -30,7 +30,6 @@ public class DetailActivity extends AppCompatActivity {
         final Tracking tracking = DBHelper.getTracking(getApplicationContext(), Preferences.getInt(getApplicationContext(), Preferences.TRACKING_ID_TEMP));
 
         editTextTitle = (EditText) findViewById(R.id.editTextTitle);
-        ​editTextTitle.setHint(tracking.getDate());
 
         editTextDescription = (EditText) findViewById(R.id.editTextDescription);
 
@@ -43,7 +42,7 @@ public class DetailActivity extends AppCompatActivity {
 
                 String title = editTextTitle.getText().toString();
                 if (title.equals("")) {
-                    tracking.setTitle(tracking.getDate());
+                    tracking.setTitle("ไม่ได้ตั้งชื่อ");
                 }
                 else {
                     tracking.setTitle(title);

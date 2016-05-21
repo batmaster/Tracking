@@ -2,12 +2,15 @@ package com.bananalab.tracking.view;
 
 import android.Manifest;
 import android.app.Activity;
+import android.content.Intent;
 import android.content.pm.PackageManager;
 import android.graphics.Color;
 import android.location.Location;
 import android.os.Bundle;
 import android.support.v4.app.ActivityCompat;
 import android.util.Log;
+import android.view.View;
+import android.widget.Button;
 import android.widget.Toast;
 
 import com.bananalab.tracking.R;
@@ -29,6 +32,8 @@ public class MapActivity extends Activity implements OnMapReadyCallback, Notifia
     private int t_id;
     private GoogleMap googleMap;
 
+    private Button buttonStop;
+
     public LatLng prevLoc;
     public boolean firstZoom = true;
 
@@ -36,6 +41,16 @@ public class MapActivity extends Activity implements OnMapReadyCallback, Notifia
     protected void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
         setContentView(R.layout.activity_map);
+
+        buttonStop = (Button) findViewById(R.id.buttonStop);
+        buttonStop.setOnClickListener(new View.OnClickListener() {
+
+            @Override
+            public void onClick(View v) {
+                Intent intent = new Intent(getApplicationContext(), DetailActivity.class);
+                startActivity(intent);
+            }
+        });
 
         t_id = getIntent().getIntExtra("t_id", -1);
 
@@ -52,6 +67,10 @@ public class MapActivity extends Activity implements OnMapReadyCallback, Notifia
             finish();
         }
         googleMap.setMyLocationEnabled(true);
+        googleMap.getUiSettings().setMyLocationButtonEnabled(true);
+        googleMap.getUiSettings().setCompassEnabled(true);
+        googleMap.getUiSettings().setZoomControlsEnabled(true);
+
 //        Location myLocation = googleMap.getMy/Location();
 //        googleMap.moveCamera(CameraUpdateFactory.newLatLng(new LatLng(myLocation.getLatitude(), myLocation.getLongitude())));
 
@@ -124,5 +143,11 @@ public class MapActivity extends Activity implements OnMapReadyCallback, Notifia
         super.onDestroy();
 
         DBHelper.removeNotifiableMapActivity();
+    }
+
+    @Override
+    protected void onResume() {
+        super.onResume();
+        buttonStop.setVisibility(Preferences.getInt(getApplicationContext(), Preferences.TRACKING_ID_TEMP) == -1 ? View.GONE : View.VISIBLE);
     }
 }

@@ -51,10 +51,16 @@ public class ListsAdapter extends RecyclerView.Adapter<ListsAdapter.ViewHolder> 
             }
         });
 
-        holder.textViewTitle.setText(trackings.get(position).getId() + " " + trackings.get(position).getTitle());
+        holder.textViewTitle.setText(trackings.get(position).getTitle());
         holder.textViewElapse.setText(trackings.get(position).getElapseString());
         holder.textViewDateTime.setText(trackings.get(position).getDate());
         holder.textViewDistance.setText(trackings.get(position).getDistanceString());
+        if (trackings.get(position).getDescription() == null || trackings.get(position).getDescription().equals("")) {
+            holder.textViewDescription.setVisibility(View.GONE);
+        }
+        else {
+            holder.textViewDescription.setText(trackings.get(position).getDescription());
+        }
     }
 
     @Override
@@ -70,6 +76,7 @@ public class ListsAdapter extends RecyclerView.Adapter<ListsAdapter.ViewHolder> 
         public TextView textViewElapse;
         public TextView textViewDateTime;
         public TextView textViewDistance;
+        public TextView textViewDescription;
 
         public ViewHolder(View view) {
             super(view);
@@ -80,6 +87,7 @@ public class ListsAdapter extends RecyclerView.Adapter<ListsAdapter.ViewHolder> 
             textViewElapse = (TextView) view.findViewById(R.id.textViewElapse);
             textViewDateTime = (TextView) view.findViewById(R.id.textViewDateTime);
             textViewDistance = (TextView) view.findViewById(R.id.textViewDistance);
+            textViewDescription = (TextView) view.findViewById(R.id.textViewDescription);
         }
     }
 }

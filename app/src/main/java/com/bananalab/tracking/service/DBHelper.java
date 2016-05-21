@@ -140,8 +140,8 @@ public class DBHelper extends SQLiteOpenHelper {
         tracking.setDistance(distance);
 
         ContentValues values = new ContentValues();
-        values.put("title", tracking.getTitle());
-        values.put("description", tracking.getDescription());
+        values.put("title", tracking.getTitle().trim());
+        values.put("description", tracking.getDescription().trim());
         values.put("elapse", tracking.getElapse());
         values.put("distance", tracking.getDistance());
         values.put("size", coordinates.size());

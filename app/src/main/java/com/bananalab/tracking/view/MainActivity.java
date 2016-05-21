@@ -89,7 +89,6 @@ public class MainActivity extends AppCompatActivity {
                     onResume();
                 }
                 else {
-
                     Intent intent = new Intent(getApplicationContext(), DetailActivity.class);
                     startActivity(intent);
                 }
