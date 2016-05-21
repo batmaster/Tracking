@@ -120,11 +120,11 @@ public class Tracking {
             return String.format("%.1f", d) + " เมตร";
         else {
             String str = "";
-            str += (d / 1000) + " กิโลเมตร";
+            str += String.format("%.0f กิโลเมตร", d / 1000);
             d %= 1000;
 
             if (d != 0)
-                str += " " + d + " เมตร";
+                str += String.format(" %.0f เมตร", d);
 
             return str;
         }

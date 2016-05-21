@@ -118,6 +118,8 @@ public class DBHelper extends SQLiteOpenHelper {
             elapse = Preferences.SDF.parse(coordinates.get(coordinates.size() - 1).getDate()).getTime() - Preferences.SDF.parse(coordinates.get(0).getDate()).getTime();
         } catch (ParseException e) {
             e.printStackTrace();
+        } catch (ArrayIndexOutOfBoundsException e) {
+            e.printStackTrace();
         }
         tracking.setElapse(elapse);
 

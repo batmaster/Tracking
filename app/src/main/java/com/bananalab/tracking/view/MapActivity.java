@@ -19,6 +19,7 @@ import com.google.android.gms.maps.GoogleMap;
 import com.google.android.gms.maps.MapFragment;
 import com.google.android.gms.maps.OnMapReadyCallback;
 import com.google.android.gms.maps.model.LatLng;
+import com.google.android.gms.maps.model.LatLngBounds;
 import com.google.android.gms.maps.model.PolylineOptions;
 
 import java.util.ArrayList;
@@ -55,6 +56,7 @@ public class MapActivity extends Activity implements OnMapReadyCallback, Notifia
 //        googleMap.moveCamera(CameraUpdateFactory.newLatLng(new LatLng(myLocation.getLatitude(), myLocation.getLongitude())));
 
         coordinates = DBHelper.getCoordinates(getApplicationContext(), t_id);
+        final LatLngBounds.Builder builder = new LatLngBounds.Builder();
 
         for (int i = 0; i < coordinates.size(); i++) {
             LatLng curLoc = new LatLng(coordinates.get(i).getLatitude(), coordinates.get(i).getLongitude());
@@ -68,9 +70,14 @@ public class MapActivity extends Activity implements OnMapReadyCallback, Notifia
                 );
             }
             prevLoc = curLoc;
+
+            builder.include(curLoc);
         }
 
-        Log.d("DBH map", "onMapReady " + t_id + " " + Preferences.getInt(getApplicationContext(), Preferences.TRACKING_ID_TEMP));
+//        googleMap.moveCamera(CameraUpdateFactory.newLatLngBounds(builder.build(), 15));
+        googleMap.animateCamera(CameraUpdateFactory.newLatLngBounds(builder.build(), 64, 64, 32));
+
+        Log.d("DBH map", "onMapReady " + t_id + " " + coordinates.size());
         if (t_id == Preferences.getInt(getApplicationContext(), Preferences.TRACKING_ID_TEMP)) {
             DBHelper.setNotifiableMapActivity(MapActivity.this);
         }

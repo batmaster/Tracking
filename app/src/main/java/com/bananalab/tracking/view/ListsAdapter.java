@@ -46,12 +46,12 @@ public class ListsAdapter extends RecyclerView.Adapter<ListsAdapter.ViewHolder> 
             @Override
             public void onClick(View v) {
                 Intent intent = new Intent(context, MapActivity.class);
-                intent.putExtra("t_id", Preferences.getInt(context, Preferences.TRACKING_ID_TEMP));
+                intent.putExtra("t_id", trackings.get(position).getId());
                 context.startActivity(intent);
             }
         });
 
-        holder.textViewTitle.setText(trackings.get(position).getTitle());
+        holder.textViewTitle.setText(trackings.get(position).getId() + " " + trackings.get(position).getTitle());
         holder.textViewElapse.setText(trackings.get(position).getElapseString());
         holder.textViewDateTime.setText(trackings.get(position).getDate());
         holder.textViewDistance.setText(trackings.get(position).getDistanceString());

@@ -39,16 +39,7 @@ public class MainActivity extends AppCompatActivity {
     protected void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
         setContentView(R.layout.activity_main);
-
-//        Preferences.removeInt(getApplicationContext(), Preferences.TRACKING_ID_TEMP);
-
         recyclerViewTracking = (RecyclerView) findViewById(R.id.recyclerViewTracking);
-
-//        Tracking[] s = {
-//                new Tracking("บ้าน สายใต้", "1 ชั่วโมง 48 นาที", "", "02:30 24/04/2016", 42000),
-//                new Tracking("เกษตร", "28 นาที", "", "12:30 24/04/2016", 8000),
-//                new Tracking("รังสิต", "53 นาที", "", "16:30 24/04/2016", 11600),
-//        };
 
         layoutManager = new LinearLayoutManager(this);
         recyclerViewTracking.setLayoutManager(layoutManager);
@@ -80,10 +71,6 @@ public class MainActivity extends AppCompatActivity {
 
             @Override
             public void onClick(View v) {
-//                Tracking t = new Tracking(new Date().toString(), "", "", "");
-//                trackings.add(t);
-//                adapter.notifyDataSetChanged();
-
                 if (Preferences.getInt(getApplicationContext(), Preferences.TRACKING_ID_TEMP) == -1) {
                     DBHelper.startTracking(getApplicationContext());
 
