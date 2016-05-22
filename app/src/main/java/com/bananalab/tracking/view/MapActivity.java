@@ -6,6 +6,7 @@ import android.content.Intent;
 import android.content.pm.PackageManager;
 import android.graphics.Color;
 import android.location.Location;
+import android.os.AsyncTask;
 import android.os.Bundle;
 import android.support.v4.app.ActivityCompat;
 import android.util.Log;
@@ -25,6 +26,7 @@ import com.google.android.gms.maps.model.LatLng;
 import com.google.android.gms.maps.model.LatLngBounds;
 import com.google.android.gms.maps.model.PolylineOptions;
 
+import java.text.ParseException;
 import java.util.ArrayList;
 
 public class MapActivity extends Activity implements OnMapReadyCallback, NotifiableMapActivity {
@@ -34,7 +36,7 @@ public class MapActivity extends Activity implements OnMapReadyCallback, Notifia
 
     private Button buttonStop;
 
-    public LatLng prevLoc;
+    public Coordinate prevLoc;
     public boolean firstZoom = true;
 
     @Override
@@ -79,65 +81,48 @@ public class MapActivity extends Activity implements OnMapReadyCallback, Notifia
             DBHelper.setNotifiableMapActivity(MapActivity.this);
         }
 
-        googleMap.setOnMapLoadedCallback(new GoogleMap.OnMapLoadedCallback() {
-            @Override
-            public void onMapLoaded() {
-                ArrayList<Coordinate> coordinates = DBHelper.getCoordinates(getApplicationContext(), t_id);
-                final LatLngBounds.Builder builder = new LatLngBounds.Builder();
-                for (int i = 0; i < coordinates.size(); i++) {
-                    LatLng curLoc = new LatLng(coordinates.get(i).getLatitude(), coordinates.get(i).getLongitude());
+        ShowPolyLine task = new ShowPolyLine();
+        task.execute();
 
-                    if (prevLoc != null) {
-                        float[] res = new float[1];
-                        Location.distanceBetween(prevLoc.latitude, prevLoc.longitude, curLoc.latitude, curLoc.longitude, res);
 
-                        googleMap.addPolyline(new PolylineOptions()
-                                .add(prevLoc, curLoc)
-                                .width(6)
-                                .color(res[0] > 80 ? Color.RED : (res[0] > 40 ? Color.BLUE : Color.GREEN))
-                                .visible(true)
-                        );
-                    }
-                    prevLoc = curLoc;
-                    builder.include(curLoc);
-                }
-
-                Log.d("DBH map", "onMapReady " + t_id + " " + coordinates.size());
-
-                try {
-                    googleMap.animateCamera(CameraUpdateFactory.newLatLngBounds(builder.build(), 15));
-                    firstZoom = false;
-                } catch (IllegalStateException e) {
-                    e.printStackTrace();
-                    Toast.makeText(getApplicationContext(), "กำลังค้นหาตำแหน่ง", Toast.LENGTH_SHORT).show();
-                }
-            }
-        });
     }
     // TODO check again
     @Override
     public void notifyMap(Coordinate newCoordinate) {
         Log.d("DBH map", "notifyMap " + newCoordinate);
 
-        LatLng curLoc = new LatLng(newCoordinate.getLatitude(), newCoordinate.getLongitude());
+        LatLng prevLatLng = new LatLng(prevLoc.getLatitude(), prevLoc.getLongitude());
+        LatLng curLatLng = new LatLng(newCoordinate.getLatitude(), newCoordinate.getLongitude());
 
         float[] res = new float[1];
-        Location.distanceBetween(prevLoc.latitude, prevLoc.longitude, curLoc.latitude, curLoc.longitude, res);
+        Location.distanceBetween(prevLatLng.latitude, prevLatLng.longitude, curLatLng.latitude, curLatLng.longitude, res);
+
+        long elapseHr = 0;
+        try {
+            elapseHr = Preferences.SDF.parse(newCoordinate.getDate()).getTime() - Preferences.SDF.parse(prevLoc.getDate()).getTime();
+            elapseHr /= 3600000;
+        } catch (ParseException e) {
+            e.printStackTrace();
+        } catch (ArrayIndexOutOfBoundsException e) {
+            e.printStackTrace();
+        }
+        float velocity = res[0] / 1000 / elapseHr;
+        Log.d("km/hr", velocity + "");
 
         googleMap.addPolyline(new PolylineOptions()
-                .add(prevLoc, curLoc)
+                .add(prevLatLng, curLatLng)
                 .width(6)
-                .color(res[0] > 80 ? Color.RED : (res[0] > 40 ? Color.BLUE : Color.GREEN))
+                .color(velocity > 80 ? Color.RED : (velocity > 40 ? Color.BLUE : Color.GREEN))
                 .visible(true)
         );
 
-        prevLoc = curLoc;
-        if (googleMap.getProjection().getVisibleRegion().latLngBounds.contains(curLoc)) {
+        prevLoc = newCoordinate;
+        if (googleMap.getProjection().getVisibleRegion().latLngBounds.contains(curLatLng)) {
             if (firstZoom) {
-                googleMap.animateCamera(CameraUpdateFactory.newLatLngZoom(curLoc, 15));
+                googleMap.animateCamera(CameraUpdateFactory.newLatLngZoom(curLatLng, 15));
             }
             else {
-                googleMap.animateCamera(CameraUpdateFactory.newLatLngZoom(curLoc, googleMap.getCameraPosition().zoom));
+                googleMap.animateCamera(CameraUpdateFactory.newLatLngZoom(curLatLng, googleMap.getCameraPosition().zoom));
             }
         }
     }
@@ -153,5 +138,69 @@ public class MapActivity extends Activity implements OnMapReadyCallback, Notifia
     protected void onResume() {
         super.onResume();
         buttonStop.setVisibility(Preferences.getInt(getApplicationContext(), Preferences.TRACKING_ID_TEMP) == -1 ? View.GONE : View.VISIBLE);
+    }
+
+    private class ShowPolyLine extends AsyncTask<Void, Void, Void> {
+
+        @Override
+        protected Void doInBackground(Void... params) {
+            return null;
+        }
+
+        @Override
+        protected void onPostExecute(Void result) {
+            super.onPostExecute(result);
+
+            ArrayList<Coordinate> coordinates = DBHelper.getCoordinates(getApplicationContext(), t_id);
+            final LatLngBounds.Builder builder = new LatLngBounds.Builder();
+            for (int i = 0; i < coordinates.size(); i++) {
+                LatLng curLatLng = new LatLng(coordinates.get(i).getLatitude(), coordinates.get(i).getLongitude());
+
+                if (prevLoc != null) {
+                    LatLng prevLatLng = new LatLng(prevLoc.getLatitude(), prevLoc.getLongitude());
+
+                    float[] res = new float[1];
+                    Location.distanceBetween(prevLatLng.latitude, prevLatLng.longitude, curLatLng.latitude, curLatLng.longitude, res);
+
+                    float elapseHr = 0;
+                    try {
+                        elapseHr = Preferences.SDF.parse(coordinates.get(i).getDate()).getTime() - Preferences.SDF.parse(prevLoc.getDate()).getTime();
+                        elapseHr /= 3600000;
+                    } catch (ParseException e) {
+                        e.printStackTrace();
+                    } catch (ArrayIndexOutOfBoundsException e) {
+                        e.printStackTrace();
+                    }
+                    float velocity = res[0] / 1000 / elapseHr;
+
+
+                    googleMap.addPolyline(new PolylineOptions()
+                            .add(prevLatLng, curLatLng)
+                            .width(6)
+                            .color(velocity > 80 ? Color.RED : (velocity > 40 ? Color.BLUE : Color.GREEN))
+                            .visible(true)
+                    );
+                }
+                prevLoc = coordinates.get(i);
+                builder.include(curLatLng);
+            }
+
+            Log.d("DBH map", "onMapReady " + t_id + " " + coordinates.size());
+
+            googleMap.setOnMapLoadedCallback(new GoogleMap.OnMapLoadedCallback() {
+                @Override
+                public void onMapLoaded() {
+
+                    try {
+                        googleMap.animateCamera(CameraUpdateFactory.newLatLngBounds(builder.build(), 15));
+                        firstZoom = false;
+                    } catch (IllegalStateException e) {
+                        e.printStackTrace();
+                        Toast.makeText(getApplicationContext(), "กำลังค้นหาตำแหน่ง", Toast.LENGTH_SHORT).show();
+                    }
+                }
+            });
+        }
+
     }
 }
