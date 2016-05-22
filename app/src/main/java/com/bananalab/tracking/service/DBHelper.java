@@ -2,6 +2,7 @@ package com.bananalab.tracking.service;
 
 import android.content.ContentValues;
 import android.content.Context;
+import android.content.Intent;
 import android.database.Cursor;
 import android.database.sqlite.SQLiteDatabase;
 import android.database.sqlite.SQLiteOpenHelper;
@@ -10,9 +11,8 @@ import android.util.Log;
 
 import com.bananalab.tracking.model.Coordinate;
 import com.bananalab.tracking.model.Tracking;
-import com.bananalab.tracking.view.NotifiableMapActivity;
-import com.google.android.gms.maps.model.LatLng;
 
+import java.io.Serializable;
 import java.text.ParseException;
 import java.util.ArrayList;
 import java.util.Date;
@@ -25,8 +25,6 @@ public class DBHelper extends SQLiteOpenHelper {
     public static final String DB_NAME = "tracking";
 
     private Context context;
-
-    private static NotifiableMapActivity notifiableMapActivity;
 
     public DBHelper(Context context) {
         super(context, DB_NAME, null, 1);
@@ -54,17 +52,6 @@ public class DBHelper extends SQLiteOpenHelper {
     @Override
     public void onUpgrade(SQLiteDatabase db, int oldVersion, int newVersion) {
         onCreate(db);
-    }
-
-    public static void setNotifiableMapActivity(NotifiableMapActivity activity) {
-        notifiableMapActivity = activity;
-        Log.d("DBH", "setNotifiableMapActivity " + activity);
-    }
-
-    public static void removeNotifiableMapActivity() {
-        notifiableMapActivity = null;
-
-        Log.d("DBH", "removeNotifiableMapActivity");
     }
 
     public static void startTracking(Context context) {
@@ -96,9 +83,9 @@ public class DBHelper extends SQLiteOpenHelper {
 
             long id = db.insert("coordinates", null, values);
 
-            if (notifiableMapActivity != null) {
-                notifiableMapActivity.notifyMap(coordinate);
-            }
+            Intent intent = new Intent(TrackingApplication.INTENT_FILTER_NOTIFY_MAP);
+            intent.putExtra("newCoordinate", (Serializable) coordinate);
+            context.sendBroadcast(intent);
 
             Log.d("DBH", "track " + values.toString());
         }
@@ -149,11 +136,10 @@ public class DBHelper extends SQLiteOpenHelper {
         db.update("trackings", values, "id = ?", new String[] {Integer.toString(trackingTempId)});
 
         Preferences.removeInt(context, Preferences.TRACKING_ID_TEMP);
-        removeNotifiableMapActivity();
 
         Log.d("DBH", "finishTracking " + values.toString());
 
-        FireBaseHelper.saveTracking(context, trackingTempId);
+        FireBaseHelper.saveTracking(context, trackingTempId, 0);
     }
 
     public static ArrayList<Coordinate> getCoordinates(Context context, int t_id) {
@@ -165,7 +151,7 @@ public class DBHelper extends SQLiteOpenHelper {
         cursor.moveToFirst();
 
         while (!cursor.isAfterLast()) {
-            coordinates.add(new Coordinate(cursor.getInt(1), cursor.getString(2), cursor.getDouble(3), cursor.getDouble(4), cursor.getDouble(5), cursor.getInt(6)));
+            coordinates.add(new Coordinate(cursor.getInt(1), cursor.getString(2), cursor.getDouble(3), cursor.getDouble(4), cursor.getDouble(5)));
             cursor.moveToNext();
         }
 
@@ -212,7 +198,7 @@ public class DBHelper extends SQLiteOpenHelper {
         return tracking;
     }
 
-    public static void setHasSync(Context context, int t_id, int hasSync) {
+    public static void setHasSync(Context context, int t_id, int hasSync, int inListPosition) {
         DBHelper that = new DBHelper(context);
         SQLiteDatabase db = that.getWritableDatabase();
 
@@ -220,8 +206,10 @@ public class DBHelper extends SQLiteOpenHelper {
         values.put("hasSync", 1);
 
         db.update("trackings", values, "id = ?", new String[] {Integer.toString(t_id)});
-        db.update("coordinates", values, "t_id = ?", new String[] {Integer.toString(t_id)});
 
+        Intent intent = new Intent(TrackingApplication.INTENT_FILTER_REFRESH_LIST);
+        intent.putExtra("inListPosition", inListPosition);
+        context.sendBroadcast(intent);
 
         Log.d("DBH", "setHasSync " + t_id + " to " + hasSync);
     }

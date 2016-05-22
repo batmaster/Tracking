@@ -13,6 +13,7 @@ import android.widget.TextView;
 
 import com.bananalab.tracking.R;
 import com.bananalab.tracking.model.Tracking;
+import com.bananalab.tracking.service.FireBaseHelper;
 import com.bananalab.tracking.service.Preferences;
 
 import java.util.ArrayList;
@@ -60,9 +61,19 @@ public class ListsAdapter extends RecyclerView.Adapter<ListsAdapter.ViewHolder> 
             holder.textViewDescription.setVisibility(View.GONE);
         }
         else {
+            holder.textViewDescription.setVisibility(View.VISIBLE);
             holder.textViewDescription.setText(trackings.get(position).getDescription());
         }
-        if (trackings.get(position).getHasSync() == 1) {
+        if (trackings.get(position).getHasSync() == 0) {
+            holder.imageViewHasSync.setVisibility(View.VISIBLE);
+            holder.imageViewHasSync.setOnClickListener(new View.OnClickListener() {
+                @Override
+                public void onClick(View v) {
+                    FireBaseHelper.saveTracking(context, trackings.get(position).getId(), position);
+                }
+            });
+        }
+        else {
             holder.imageViewHasSync.setVisibility(View.GONE);
         }
     }

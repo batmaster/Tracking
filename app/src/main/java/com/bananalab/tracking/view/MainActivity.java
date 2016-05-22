@@ -1,7 +1,10 @@
 package com.bananalab.tracking.view;
 
 import android.Manifest;
+import android.content.BroadcastReceiver;
+import android.content.Context;
 import android.content.Intent;
+import android.content.IntentFilter;
 import android.content.pm.PackageManager;
 import android.support.annotation.NonNull;
 import android.support.v4.app.ActivityCompat;
@@ -10,6 +13,7 @@ import android.os.Bundle;
 import android.support.v7.widget.LinearLayoutManager;
 import android.support.v7.widget.RecyclerView;
 import android.support.v7.widget.helper.ItemTouchHelper;
+import android.util.Log;
 import android.view.View;
 import android.widget.Button;
 import android.widget.Toast;
@@ -19,6 +23,7 @@ import com.bananalab.tracking.model.Tracking;
 import com.bananalab.tracking.service.DBHelper;
 import com.bananalab.tracking.service.LocationBackgroundService;
 import com.bananalab.tracking.service.Preferences;
+import com.bananalab.tracking.service.TrackingApplication;
 
 import java.util.ArrayList;
 import java.util.Arrays;
@@ -34,6 +39,7 @@ public class MainActivity extends AppCompatActivity {
     private Button button;
 
     private static final int PERMISSION_LOCATION_REQUEST_CODE = 1909;
+    private BroadcastReceiver broadcastReceiver;
 
     @Override
     protected void onCreate(Bundle savedInstanceState) {
@@ -97,6 +103,22 @@ public class MainActivity extends AppCompatActivity {
 
             }
         });
+
+        broadcastReceiver = new BroadcastReceiver() {
+
+            @Override
+            public void onReceive(Context context, Intent intent) {
+                Log.d("DBH map", "notifyMain");
+
+                trackings = DBHelper.getTrackings(getApplicationContext());
+                adapter = new ListsAdapter(MainActivity.this, trackings);
+                recyclerViewTracking.setAdapter(adapter);
+
+                int inListPosition = intent.getIntExtra("inListPosition", 0);
+                recyclerViewTracking.smoothScrollToPosition(inListPosition);
+            }
+        };
+        registerReceiver(broadcastReceiver, new IntentFilter(TrackingApplication.INTENT_FILTER_REFRESH_LIST));
     }
 
     @Override
@@ -134,4 +156,13 @@ public class MainActivity extends AppCompatActivity {
         recyclerViewTracking.setAdapter(adapter);
     }
 
+    @Override
+    protected void onDestroy() {
+        super.onDestroy();
+        try {
+            unregisterReceiver(broadcastReceiver);
+        } catch (RuntimeException e) {
+            e.printStackTrace();
+        }
+    }
 }

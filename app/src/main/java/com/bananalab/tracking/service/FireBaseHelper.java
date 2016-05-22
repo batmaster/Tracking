@@ -16,7 +16,7 @@ import java.util.ArrayList;
  */
 public class FireBaseHelper {
 
-    public static void saveTracking(final Context context, final int t_id) {
+    public static void saveTracking(final Context context, final int t_id, final int inListPosition) {
         final Tracking tracking = DBHelper.getTracking(context, t_id);
 
         final ArrayList<Coordinate> coordinates = DBHelper.getCoordinates(context, t_id);
@@ -24,17 +24,17 @@ public class FireBaseHelper {
         final Firebase rootP = new Firebase("https://tracking-b.firebaseio.com/");
 
         final Firebase trackingsP = rootP.child(Preferences.getAccount(context).getEmail().replace('.', '_')).child("trackings");
-        trackingsP.push().setValue(tracking, new Firebase.CompletionListener() {
+        trackingsP.child(Integer.toString(tracking.getId())).setValue(tracking, new Firebase.CompletionListener() {
             @Override
             public void onComplete(FirebaseError firebaseError, Firebase firebase) {
 
                 Firebase coordinatesP = rootP.child(Preferences.getAccount(context).getEmail().replace('.', '_')).child("coordinates");
-                coordinatesP.push().setValue(coordinates, new Firebase.CompletionListener() {
+                coordinatesP.child(Integer.toString(tracking.getId())).setValue(coordinates, new Firebase.CompletionListener() {
 
                     @Override
                     public void onComplete(FirebaseError firebaseError, Firebase firebase) {
                         if (firebaseError == null) {
-                            DBHelper.setHasSync(context, t_id, 1);
+                            DBHelper.setHasSync(context, t_id, 1, inListPosition);
 
                             Toast.makeText(context, "Saved to online database.", Toast.LENGTH_SHORT).show();
                         }
@@ -45,7 +45,5 @@ public class FireBaseHelper {
                 });
             }
         });
-
-
     }
 }

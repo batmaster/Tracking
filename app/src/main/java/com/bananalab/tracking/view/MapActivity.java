@@ -2,7 +2,10 @@ package com.bananalab.tracking.view;
 
 import android.Manifest;
 import android.app.Activity;
+import android.content.BroadcastReceiver;
+import android.content.Context;
 import android.content.Intent;
+import android.content.IntentFilter;
 import android.content.pm.PackageManager;
 import android.graphics.Color;
 import android.location.Location;
@@ -18,6 +21,7 @@ import com.bananalab.tracking.R;
 import com.bananalab.tracking.model.Coordinate;
 import com.bananalab.tracking.service.DBHelper;
 import com.bananalab.tracking.service.Preferences;
+import com.bananalab.tracking.service.TrackingApplication;
 import com.google.android.gms.maps.CameraUpdateFactory;
 import com.google.android.gms.maps.GoogleMap;
 import com.google.android.gms.maps.MapFragment;
@@ -29,15 +33,17 @@ import com.google.android.gms.maps.model.PolylineOptions;
 import java.text.ParseException;
 import java.util.ArrayList;
 
-public class MapActivity extends Activity implements OnMapReadyCallback, NotifiableMapActivity {
+public class MapActivity extends Activity implements OnMapReadyCallback {
 
     private int t_id;
     private GoogleMap googleMap;
 
     private Button buttonStop;
 
-    public Coordinate prevLoc;
-    public boolean firstZoom = true;
+    private Coordinate prevLoc;
+    private boolean firstZoom = true;
+
+    private BroadcastReceiver broadcastReceiver;
 
     @Override
     protected void onCreate(Bundle savedInstanceState) {
@@ -73,12 +79,54 @@ public class MapActivity extends Activity implements OnMapReadyCallback, Notifia
         googleMap.getUiSettings().setCompassEnabled(true);
         googleMap.getUiSettings().setZoomControlsEnabled(true);
 
-//        Location myLocation = googleMap.getMy/Location();
-//        googleMap.moveCamera(CameraUpdateFactory.newLatLng(new LatLng(myLocation.getLatitude(), myLocation.getLongitude())));
+        broadcastReceiver = new BroadcastReceiver() {
+            @Override
+            public void onReceive(Context context, Intent intent) {
+                Coordinate newCoordinate = (Coordinate) intent.getExtras().getSerializable("newCoordinate");
+                Log.d("DBH map", "notifyMap " + newCoordinate);
+
+                if (prevLoc != null) {
+                    LatLng prevLatLng = new LatLng(prevLoc.getLatitude(), prevLoc.getLongitude());
+                    LatLng curLatLng = new LatLng(newCoordinate.getLatitude(), newCoordinate.getLongitude());
+
+                    float[] res = new float[1];
+                    Location.distanceBetween(prevLatLng.latitude, prevLatLng.longitude, curLatLng.latitude, curLatLng.longitude, res);
+
+                    long elapseHr = 0;
+                    try {
+                        elapseHr = Preferences.SDF.parse(newCoordinate.getDate()).getTime() - Preferences.SDF.parse(prevLoc.getDate()).getTime();
+                        elapseHr /= 3600000;
+                    } catch (ParseException e) {
+                        e.printStackTrace();
+                    } catch (ArrayIndexOutOfBoundsException e) {
+                        e.printStackTrace();
+                    }
+                    float velocity = res[0] / 1000 / elapseHr;
+                    Log.d("km/hr", velocity + "");
+
+                    googleMap.addPolyline(new PolylineOptions()
+                            .add(prevLatLng, curLatLng)
+                            .width(6)
+                            .color(velocity > 80 ? Color.RED : (velocity > 40 ? Color.BLUE : Color.GREEN))
+                            .visible(true)
+                    );
+
+                    if (googleMap.getProjection().getVisibleRegion().latLngBounds.contains(curLatLng)) {
+                        if (firstZoom) {
+                            googleMap.animateCamera(CameraUpdateFactory.newLatLngZoom(curLatLng, 15));
+                        }
+                        else {
+                            googleMap.animateCamera(CameraUpdateFactory.newLatLngZoom(curLatLng, googleMap.getCameraPosition().zoom));
+                        }
+                    }
+                }
 
 
+                prevLoc = newCoordinate;
+            }
+        };
         if (t_id == Preferences.getInt(getApplicationContext(), Preferences.TRACKING_ID_TEMP)) {
-            DBHelper.setNotifiableMapActivity(MapActivity.this);
+            registerReceiver(broadcastReceiver, new IntentFilter(TrackingApplication.INTENT_FILTER_NOTIFY_MAP));
         }
 
         ShowPolyLine task = new ShowPolyLine();
@@ -86,61 +134,21 @@ public class MapActivity extends Activity implements OnMapReadyCallback, Notifia
 
 
     }
-    // TODO check again
-    @Override
-    public void notifyMap(Coordinate newCoordinate) {
-        Log.d("DBH map", "notifyMap " + newCoordinate);
-
-        if (prevLoc != null) {
-            LatLng prevLatLng = new LatLng(prevLoc.getLatitude(), prevLoc.getLongitude());
-            LatLng curLatLng = new LatLng(newCoordinate.getLatitude(), newCoordinate.getLongitude());
-
-            float[] res = new float[1];
-            Location.distanceBetween(prevLatLng.latitude, prevLatLng.longitude, curLatLng.latitude, curLatLng.longitude, res);
-
-            long elapseHr = 0;
-            try {
-                elapseHr = Preferences.SDF.parse(newCoordinate.getDate()).getTime() - Preferences.SDF.parse(prevLoc.getDate()).getTime();
-                elapseHr /= 3600000;
-            } catch (ParseException e) {
-                e.printStackTrace();
-            } catch (ArrayIndexOutOfBoundsException e) {
-                e.printStackTrace();
-            }
-            float velocity = res[0] / 1000 / elapseHr;
-            Log.d("km/hr", velocity + "");
-
-            googleMap.addPolyline(new PolylineOptions()
-                    .add(prevLatLng, curLatLng)
-                    .width(6)
-                    .color(velocity > 80 ? Color.RED : (velocity > 40 ? Color.BLUE : Color.GREEN))
-                    .visible(true)
-            );
-
-            if (googleMap.getProjection().getVisibleRegion().latLngBounds.contains(curLatLng)) {
-                if (firstZoom) {
-                    googleMap.animateCamera(CameraUpdateFactory.newLatLngZoom(curLatLng, 15));
-                }
-                else {
-                    googleMap.animateCamera(CameraUpdateFactory.newLatLngZoom(curLatLng, googleMap.getCameraPosition().zoom));
-                }
-            }
-        }
-
-        prevLoc = newCoordinate;
-    }
-
-    @Override
-    protected void onDestroy() {
-        super.onDestroy();
-
-        DBHelper.removeNotifiableMapActivity();
-    }
 
     @Override
     protected void onResume() {
         super.onResume();
         buttonStop.setVisibility(Preferences.getInt(getApplicationContext(), Preferences.TRACKING_ID_TEMP) == -1 ? View.GONE : View.VISIBLE);
+    }
+
+    @Override
+    protected void onDestroy() {
+        super.onDestroy();
+        try {
+            unregisterReceiver(broadcastReceiver);
+        } catch (RuntimeException e) {
+            e.printStackTrace();
+        }
     }
 
     private class ShowPolyLine extends AsyncTask<Void, Void, Void> {
