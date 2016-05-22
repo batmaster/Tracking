@@ -88,10 +88,13 @@ public class MapActivity extends Activity implements OnMapReadyCallback, Notifia
                     LatLng curLoc = new LatLng(coordinates.get(i).getLatitude(), coordinates.get(i).getLongitude());
 
                     if (prevLoc != null) {
+                        float[] res = new float[1];
+                        Location.distanceBetween(prevLoc.latitude, prevLoc.longitude, curLoc.latitude, curLoc.longitude, res);
+
                         googleMap.addPolyline(new PolylineOptions()
                                 .add(prevLoc, curLoc)
                                 .width(6)
-                                .color(Color.GREEN)
+                                .color(res[0] > 80 ? Color.RED : (res[0] > 40 ? Color.BLUE : Color.GREEN))
                                 .visible(true)
                         );
                     }
@@ -118,14 +121,15 @@ public class MapActivity extends Activity implements OnMapReadyCallback, Notifia
 
         LatLng curLoc = new LatLng(newCoordinate.getLatitude(), newCoordinate.getLongitude());
 
-        if (prevLoc != null) {
-            googleMap.addPolyline(new PolylineOptions()
-                    .add(prevLoc, curLoc)
-                    .width(6)
-                    .color(Color.GREEN)
-                    .visible(true)
-            );
-        }
+        float[] res = new float[1];
+        Location.distanceBetween(prevLoc.latitude, prevLoc.longitude, curLoc.latitude, curLoc.longitude, res);
+
+        googleMap.addPolyline(new PolylineOptions()
+                .add(prevLoc, curLoc)
+                .width(6)
+                .color(res[0] > 80 ? Color.RED : (res[0] > 40 ? Color.BLUE : Color.GREEN))
+                .visible(true)
+        );
 
         prevLoc = curLoc;
         if (googleMap.getProjection().getVisibleRegion().latLngBounds.contains(curLoc)) {

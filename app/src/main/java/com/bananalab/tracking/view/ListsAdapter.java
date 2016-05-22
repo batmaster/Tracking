@@ -51,7 +51,7 @@ public class ListsAdapter extends RecyclerView.Adapter<ListsAdapter.ViewHolder> 
             }
         });
 
-        holder.textViewTitle.setText(trackings.get(position).getTitle());
+        holder.textViewTitle.setText(trackings.get(position).getSize() + " " + trackings.get(position).getTitle());
         holder.textViewElapse.setText(trackings.get(position).getElapseString());
         holder.textViewDateTime.setText(trackings.get(position).getDate());
         holder.textViewDistance.setText(trackings.get(position).getDistanceString());
@@ -67,6 +67,8 @@ public class ListsAdapter extends RecyclerView.Adapter<ListsAdapter.ViewHolder> 
     public int getItemCount() {
         return trackings.size();
     }
+
+
 
     public static class ViewHolder extends RecyclerView.ViewHolder {
 
