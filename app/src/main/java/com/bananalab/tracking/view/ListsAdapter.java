@@ -8,6 +8,7 @@ import android.util.Log;
 import android.view.LayoutInflater;
 import android.view.View;
 import android.view.ViewGroup;
+import android.widget.ImageView;
 import android.widget.TextView;
 
 import com.bananalab.tracking.R;
@@ -61,6 +62,9 @@ public class ListsAdapter extends RecyclerView.Adapter<ListsAdapter.ViewHolder> 
         else {
             holder.textViewDescription.setText(trackings.get(position).getDescription());
         }
+        if (trackings.get(position).getHasSync() == 1) {
+            holder.imageViewHasSync.setVisibility(View.GONE);
+        }
     }
 
     @Override
@@ -79,6 +83,7 @@ public class ListsAdapter extends RecyclerView.Adapter<ListsAdapter.ViewHolder> 
         public TextView textViewDateTime;
         public TextView textViewDistance;
         public TextView textViewDescription;
+        public ImageView imageViewHasSync;
 
         public ViewHolder(View view) {
             super(view);
@@ -90,6 +95,7 @@ public class ListsAdapter extends RecyclerView.Adapter<ListsAdapter.ViewHolder> 
             textViewDateTime = (TextView) view.findViewById(R.id.textViewDateTime);
             textViewDistance = (TextView) view.findViewById(R.id.textViewDistance);
             textViewDescription = (TextView) view.findViewById(R.id.textViewDescription);
+            imageViewHasSync = (ImageView) view.findViewById(R.id.imageViewHasSync);
         }
     }
 }

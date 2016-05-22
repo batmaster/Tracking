@@ -34,8 +34,8 @@ public class DBHelper extends SQLiteOpenHelper {
 
     @Override
     public void onCreate(SQLiteDatabase db) {
-        db.execSQL(String.format("CREATE TABLE trackings (id INTEGER PRIMARY KEY AUTOINCREMENT, title TEXT, description TEXT, date TEXT, distance REAL, elapse INTEGER, size INTEGER)"));
-        db.execSQL(String.format("CREATE TABLE coordinates (id INTEGER PRIMARY KEY AUTOINCREMENT, t_id INTEGER, date TEXT, latitude REAL, longitude REAL, altitude REAL)"));
+        db.execSQL(String.format("CREATE TABLE trackings (id INTEGER PRIMARY KEY AUTOINCREMENT, title TEXT, description TEXT, date TEXT, distance REAL, elapse INTEGER, size INTEGER, hasSync INTEGER)"));
+        db.execSQL(String.format("CREATE TABLE coordinates (id INTEGER PRIMARY KEY AUTOINCREMENT, t_id INTEGER, date TEXT, latitude REAL, longitude REAL, altitude REAL, hasSync INTEGER)"));
     }
 
 //    // for testing
@@ -152,6 +152,8 @@ public class DBHelper extends SQLiteOpenHelper {
         removeNotifiableMapActivity();
 
         Log.d("DBH", "finishTracking " + values.toString());
+
+        FireBaseHelper.saveTracking(context, trackingTempId);
     }
 
     public static ArrayList<Coordinate> getCoordinates(Context context, int t_id) {
@@ -163,7 +165,7 @@ public class DBHelper extends SQLiteOpenHelper {
         cursor.moveToFirst();
 
         while (!cursor.isAfterLast()) {
-            coordinates.add(new Coordinate(cursor.getInt(1), cursor.getString(2), cursor.getDouble(3), cursor.getDouble(4), cursor.getDouble(5)));
+            coordinates.add(new Coordinate(cursor.getInt(1), cursor.getString(2), cursor.getDouble(3), cursor.getDouble(4), cursor.getDouble(5), cursor.getInt(6)));
             cursor.moveToNext();
         }
 
@@ -182,7 +184,7 @@ public class DBHelper extends SQLiteOpenHelper {
         cursor.moveToFirst();
 
         while (!cursor.isAfterLast()) {
-            trackings.add(new Tracking(cursor.getInt(0), cursor.getString(1), cursor.getString(2), cursor.getString(3), cursor.getDouble(4), cursor.getLong(5), cursor.getInt(6)));
+            trackings.add(new Tracking(cursor.getInt(0), cursor.getString(1), cursor.getString(2), cursor.getString(3), cursor.getDouble(4), cursor.getLong(5), cursor.getInt(6), cursor.getInt(7)));
             cursor.moveToNext();
         }
 
@@ -201,13 +203,27 @@ public class DBHelper extends SQLiteOpenHelper {
         cursor.moveToFirst();
 
         while (!cursor.isAfterLast()) {
-            tracking = new Tracking(cursor.getInt(0), cursor.getString(1), cursor.getString(2), cursor.getString(3), cursor.getDouble(4), cursor.getLong(5), cursor.getInt(6));
+            tracking = new Tracking(cursor.getInt(0), cursor.getString(1), cursor.getString(2), cursor.getString(3), cursor.getDouble(4), cursor.getLong(5), cursor.getInt(6), cursor.getInt(7));
             cursor.moveToNext();
         }
 
         Log.d("DBH", "getTracking " + tracking);
 
         return tracking;
+    }
+
+    public static void setHasSync(Context context, int t_id, int hasSync) {
+        DBHelper that = new DBHelper(context);
+        SQLiteDatabase db = that.getWritableDatabase();
+
+        ContentValues values = new ContentValues();
+        values.put("hasSync", 1);
+
+        db.update("trackings", values, "id = ?", new String[] {Integer.toString(t_id)});
+        db.update("coordinates", values, "t_id = ?", new String[] {Integer.toString(t_id)});
+
+
+        Log.d("DBH", "setHasSync " + t_id + " to " + hasSync);
     }
 
 }

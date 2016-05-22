@@ -91,40 +91,43 @@ public class MapActivity extends Activity implements OnMapReadyCallback, Notifia
     public void notifyMap(Coordinate newCoordinate) {
         Log.d("DBH map", "notifyMap " + newCoordinate);
 
-        LatLng prevLatLng = new LatLng(prevLoc.getLatitude(), prevLoc.getLongitude());
-        LatLng curLatLng = new LatLng(newCoordinate.getLatitude(), newCoordinate.getLongitude());
+        if (prevLoc != null) {
+            LatLng prevLatLng = new LatLng(prevLoc.getLatitude(), prevLoc.getLongitude());
+            LatLng curLatLng = new LatLng(newCoordinate.getLatitude(), newCoordinate.getLongitude());
 
-        float[] res = new float[1];
-        Location.distanceBetween(prevLatLng.latitude, prevLatLng.longitude, curLatLng.latitude, curLatLng.longitude, res);
+            float[] res = new float[1];
+            Location.distanceBetween(prevLatLng.latitude, prevLatLng.longitude, curLatLng.latitude, curLatLng.longitude, res);
 
-        long elapseHr = 0;
-        try {
-            elapseHr = Preferences.SDF.parse(newCoordinate.getDate()).getTime() - Preferences.SDF.parse(prevLoc.getDate()).getTime();
-            elapseHr /= 3600000;
-        } catch (ParseException e) {
-            e.printStackTrace();
-        } catch (ArrayIndexOutOfBoundsException e) {
-            e.printStackTrace();
+            long elapseHr = 0;
+            try {
+                elapseHr = Preferences.SDF.parse(newCoordinate.getDate()).getTime() - Preferences.SDF.parse(prevLoc.getDate()).getTime();
+                elapseHr /= 3600000;
+            } catch (ParseException e) {
+                e.printStackTrace();
+            } catch (ArrayIndexOutOfBoundsException e) {
+                e.printStackTrace();
+            }
+            float velocity = res[0] / 1000 / elapseHr;
+            Log.d("km/hr", velocity + "");
+
+            googleMap.addPolyline(new PolylineOptions()
+                    .add(prevLatLng, curLatLng)
+                    .width(6)
+                    .color(velocity > 80 ? Color.RED : (velocity > 40 ? Color.BLUE : Color.GREEN))
+                    .visible(true)
+            );
+
+            if (googleMap.getProjection().getVisibleRegion().latLngBounds.contains(curLatLng)) {
+                if (firstZoom) {
+                    googleMap.animateCamera(CameraUpdateFactory.newLatLngZoom(curLatLng, 15));
+                }
+                else {
+                    googleMap.animateCamera(CameraUpdateFactory.newLatLngZoom(curLatLng, googleMap.getCameraPosition().zoom));
+                }
+            }
         }
-        float velocity = res[0] / 1000 / elapseHr;
-        Log.d("km/hr", velocity + "");
-
-        googleMap.addPolyline(new PolylineOptions()
-                .add(prevLatLng, curLatLng)
-                .width(6)
-                .color(velocity > 80 ? Color.RED : (velocity > 40 ? Color.BLUE : Color.GREEN))
-                .visible(true)
-        );
 
         prevLoc = newCoordinate;
-        if (googleMap.getProjection().getVisibleRegion().latLngBounds.contains(curLatLng)) {
-            if (firstZoom) {
-                googleMap.animateCamera(CameraUpdateFactory.newLatLngZoom(curLatLng, 15));
-            }
-            else {
-                googleMap.animateCamera(CameraUpdateFactory.newLatLngZoom(curLatLng, googleMap.getCameraPosition().zoom));
-            }
-        }
     }
 
     @Override

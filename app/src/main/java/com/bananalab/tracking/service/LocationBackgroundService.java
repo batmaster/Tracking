@@ -55,7 +55,7 @@ public class LocationBackgroundService extends Service {
 
                 LocationRequest request = new LocationRequest();
                 request.setPriority(LocationRequest.PRIORITY_HIGH_ACCURACY);
-                request.setInterval(1000);
+                request.setInterval(3000);
                 request.setSmallestDisplacement(5);
 
                 LocationServices.FusedLocationApi.requestLocationUpdates(client, request, locationListener);

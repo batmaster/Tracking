@@ -16,6 +16,7 @@ public class Coordinate {
     private double latitude;
     private double longitude;
     private double altitude;
+    private int hasSync;
 
     /**
      * When query from db.
@@ -24,14 +25,16 @@ public class Coordinate {
      * @param latitude
      * @param longitude
      * @param altitude
+     * @param hasSync
      */
 
-    public Coordinate(int t_id, String date, double latitude, double longitude, double altitude) {
+    public Coordinate(int t_id, String date, double latitude, double longitude, double altitude, int hasSync) {
         this.t_id = t_id;
         this.date = date;
         this.latitude = latitude;
         this.longitude = longitude;
         this.altitude = altitude;
+        this.hasSync = hasSync;
     }
 
     /**
@@ -89,5 +92,13 @@ public class Coordinate {
 
     public void setAltitude(double altitude) {
         this.altitude = altitude;
+    }
+
+    public int getHasSync() {
+        return hasSync;
+    }
+
+    public void setHasSync(int hasSync) {
+        this.hasSync = hasSync;
     }
 }

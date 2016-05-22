@@ -16,6 +16,7 @@ public class Tracking {
     private String date;
     private double distance;
     private int size;
+    private int hasSync;
 
     /**
      * When query from db.
@@ -25,8 +26,9 @@ public class Tracking {
      * @param date
      * @param distance
      * @param size
+     * @param hasSync
      */
-    public Tracking(int id, String title, String description, String date, double distance, long elapse, int size) {
+    public Tracking(int id, String title, String description, String date, double distance, long elapse, int size, int hasSync) {
         this.id = id;
         this.title = title;
         this.description = description;
@@ -34,6 +36,7 @@ public class Tracking {
         this.distance = distance;
         this.elapse = elapse;
         this.size = size;
+        this.hasSync = hasSync;
     }
 
     /**
@@ -148,5 +151,13 @@ public class Tracking {
 
     public void setSize(int size) {
         this.size = size;
+    }
+
+    public int getHasSync() {
+        return hasSync;
+    }
+
+    public void setHasSync(int hasSync) {
+        this.hasSync = hasSync;
     }
 }
