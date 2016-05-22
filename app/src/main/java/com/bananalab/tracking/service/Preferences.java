@@ -3,6 +3,8 @@ package com.bananalab.tracking.service;
 import android.content.Context;
 import android.content.SharedPreferences;
 
+import com.bananalab.tracking.model.Account;
+
 import java.text.SimpleDateFormat;
 
 /**
@@ -52,5 +54,31 @@ public class Preferences {
         SharedPreferences.Editor editor = sp.edit();
         editor.remove(key);
         editor.commit();
+    }
+
+    public static void setAccount(Context context, Account account) {
+        SharedPreferences sp = context.getSharedPreferences(PREF, Context.MODE_PRIVATE);
+        SharedPreferences.Editor editor = sp.edit();
+        editor.putString("account.email", account.getEmail());
+        editor.putString("account.name", account.getName());
+        editor.putString("account.imageUrl", account.getImageUrl());
+        editor.commit();
+    }
+
+    public static void removeAccount(Context context) {
+        SharedPreferences sp = context.getSharedPreferences(PREF, Context.MODE_PRIVATE);
+        SharedPreferences.Editor editor = sp.edit();
+        editor.remove("account.email");
+        editor.remove("account.name");
+        editor.remove("account.imageUrl");
+        editor.commit();
+    }
+
+    public static Account getAccount(Context context) {
+        SharedPreferences sp = context.getSharedPreferences(PREF, Context.MODE_PRIVATE);
+        if (!sp.contains("account.email"))
+            return null;
+
+        return new Account(sp.getString("account.email", ""), sp.getString("account.name", ""), sp.getString("account.imageUrl", ""));
     }
 }

@@ -1,0 +1,48 @@
+{
+  "project_info": {
+    "project_number": "869264570217",
+    "project_id": "woven-hangar-129907"
+  },
+  "client": [
+    {
+      "client_info": {
+        "mobilesdk_app_id": "1:869264570217:android:15808763c344c78a",
+        "android_client_info": {
+          "package_name": "com.bananalab.tracking"
+        }
+      },
+      "oauth_client": [
+        {
+          "client_id": "869264570217-j3h0oul28ssn94f3isoj4mr8agj58bsb.apps.googleusercontent.com",
+          "client_type": 1,
+          "android_info": {
+            "package_name": "com.bananalab.tracking",
+            "certificate_hash": "281F7ABB259757CCA4C5EA9205DEF66EE74DE7E5"
+          }
+        },
+        {
+          "client_id": "869264570217-r7qagtt39fkenmcscvhkq3p10djeh4np.apps.googleusercontent.com",
+          "client_type": 3
+        }
+      ],
+      "api_key": [
+        {
+          "current_key": "AIzaSyCsTPtNVDKeXWnTYZUw4Jru0rDAvWzkUe8"
+        }
+      ],
+      "services": {
+        "analytics_service": {
+          "status": 1
+        },
+        "appinvite_service": {
+          "status": 1,
+          "other_platform_oauth_client": []
+        },
+        "ads_service": {
+          "status": 1
+        }
+      }
+    }
+  ],
+  "configuration_version": "1"
+}
