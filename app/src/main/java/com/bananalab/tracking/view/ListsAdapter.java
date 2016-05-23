@@ -2,6 +2,7 @@ package com.bananalab.tracking.view;
 
 import android.content.Context;
 import android.content.Intent;
+import android.graphics.Color;
 import android.support.v7.widget.CardView;
 import android.support.v7.widget.RecyclerView;
 import android.util.Log;
@@ -10,6 +11,7 @@ import android.view.View;
 import android.view.ViewGroup;
 import android.widget.ImageView;
 import android.widget.TextView;
+import android.widget.Toast;
 
 import com.bananalab.tracking.R;
 import com.bananalab.tracking.model.Tracking;
@@ -23,14 +25,17 @@ import java.util.ArrayList;
  */
 public class ListsAdapter extends RecyclerView.Adapter<ListsAdapter.ViewHolder> {
 
+    private MainActivity activity;
     private Context context;
     private ArrayList<Tracking> trackings;
+    private ArrayList<Integer> selected;
 
-    public ListsAdapter(Context context, ArrayList<Tracking> trackings) {
-        this.context = context;
+    public ListsAdapter(MainActivity activity, ArrayList<Tracking> trackings) {
+        this.activity = activity;
+        this.context = activity.getApplicationContext();
         this.trackings = trackings;
+        selected = new ArrayList<Integer>();
     }
-
 
     @Override
     public ViewHolder onCreateViewHolder(ViewGroup parent, int viewType) {
@@ -47,11 +52,47 @@ public class ListsAdapter extends RecyclerView.Adapter<ListsAdapter.ViewHolder> 
 
             @Override
             public void onClick(View v) {
-                Intent intent = new Intent(context, MapActivity.class);
-                intent.putExtra("t_id", trackings.get(position).getId());
-                context.startActivity(intent);
+                if (selected.size() == 0) {
+                    Intent intent = new Intent(context, MapActivity.class);
+                    intent.putExtra("t_id", trackings.get(position).getId());
+                    activity.startActivity(intent);
+                }
+                else {
+                    if (selected.contains(position)) {
+                        selected.remove(new Integer(position));
+                        holder.cardView.setCardBackgroundColor(Color.WHITE);
+                    }
+                    else {
+                        selected.add(position);
+                        holder.cardView.setCardBackgroundColor(context.getResources().getColor(R.color.colorAccent));
+                    }
+
+                    activity.listChangedNotify();
+                }
             }
         });
+        holder.cardView.setOnLongClickListener(new View.OnLongClickListener() {
+            @Override
+            public boolean onLongClick(View v) {
+                if (selected.contains(position)) {
+                    selected.remove(new Integer(position));
+                    holder.cardView.setCardBackgroundColor(Color.WHITE);
+                }
+                else {
+                    selected.add(position);
+                    holder.cardView.setCardBackgroundColor(context.getResources().getColor(R.color.colorAccent));
+                }
+
+                activity.listChangedNotify();
+                return true;
+            }
+        });
+        if (selected.contains(position)) {
+            holder.cardView.setCardBackgroundColor(context.getResources().getColor(R.color.colorAccent));
+        }
+        else {
+            holder.cardView.setCardBackgroundColor(Color.WHITE);
+        }
 
         holder.textViewTitle.setText(trackings.get(position).getSize() + " " + trackings.get(position).getTitle());
         holder.textViewElapse.setText(trackings.get(position).getElapseString());
@@ -64,7 +105,7 @@ public class ListsAdapter extends RecyclerView.Adapter<ListsAdapter.ViewHolder> 
             holder.textViewDescription.setVisibility(View.VISIBLE);
             holder.textViewDescription.setText(trackings.get(position).getDescription());
         }
-        if (trackings.get(position).getHasSync() == 0) {
+        if (trackings.get(position).getHasSync() == 0 && trackings.get(position).getId() != Preferences.getInt(context, Preferences.TRACKING_ID_TEMP)) {
             holder.imageViewHasSync.setVisibility(View.VISIBLE);
             holder.imageViewHasSync.setOnClickListener(new View.OnClickListener() {
                 @Override
@@ -81,6 +122,10 @@ public class ListsAdapter extends RecyclerView.Adapter<ListsAdapter.ViewHolder> 
     @Override
     public int getItemCount() {
         return trackings.size();
+    }
+
+    public ArrayList<Integer> getSelected() {
+        return selected;
     }
 
 

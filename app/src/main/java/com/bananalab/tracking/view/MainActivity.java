@@ -1,6 +1,7 @@
 package com.bananalab.tracking.view;
 
 import android.Manifest;
+import android.app.ActionBar;
 import android.content.BroadcastReceiver;
 import android.content.Context;
 import android.content.Intent;
@@ -12,8 +13,12 @@ import android.support.v7.app.AppCompatActivity;
 import android.os.Bundle;
 import android.support.v7.widget.LinearLayoutManager;
 import android.support.v7.widget.RecyclerView;
+import android.support.v7.widget.SearchView;
 import android.support.v7.widget.helper.ItemTouchHelper;
 import android.util.Log;
+import android.view.Menu;
+import android.view.MenuInflater;
+import android.view.MenuItem;
 import android.view.View;
 import android.widget.Button;
 import android.widget.Toast;
@@ -40,6 +45,8 @@ public class MainActivity extends AppCompatActivity {
 
     private static final int PERMISSION_LOCATION_REQUEST_CODE = 1909;
     private BroadcastReceiver broadcastReceiver;
+
+    private Menu menu;
 
     @Override
     protected void onCreate(Bundle savedInstanceState) {
@@ -81,9 +88,7 @@ public class MainActivity extends AppCompatActivity {
                     DBHelper.startTracking(getApplicationContext());
 
                     if (ActivityCompat.checkSelfPermission(getApplicationContext(), Manifest.permission.ACCESS_FINE_LOCATION) != PackageManager.PERMISSION_GRANTED && ActivityCompat.checkSelfPermission(getApplicationContext(), Manifest.permission.ACCESS_COARSE_LOCATION) != PackageManager.PERMISSION_GRANTED) {
-
                         ActivityCompat.requestPermissions(MainActivity.this, new String[]{Manifest.permission.ACCESS_FINE_LOCATION, Manifest.permission.ACCESS_COARSE_LOCATION}, PERMISSION_LOCATION_REQUEST_CODE);
-
                         return;
                     }
 
@@ -95,12 +100,9 @@ public class MainActivity extends AppCompatActivity {
                     onResume();
                 }
                 else {
-
                     Intent intent = new Intent(getApplicationContext(), DetailActivity.class);
                     startActivity(intent);
-
                 }
-
             }
         });
 
@@ -113,6 +115,7 @@ public class MainActivity extends AppCompatActivity {
                 trackings = DBHelper.getTrackings(getApplicationContext());
                 adapter = new ListsAdapter(MainActivity.this, trackings);
                 recyclerViewTracking.setAdapter(adapter);
+                listChangedNotify();
 
                 int inListPosition = intent.getIntExtra("inListPosition", 0);
                 recyclerViewTracking.smoothScrollToPosition(inListPosition);
@@ -146,6 +149,29 @@ public class MainActivity extends AppCompatActivity {
         }
     }
 
+    public void listChangedNotify() {
+        ArrayList<Integer> selected = ((ListsAdapter) recyclerViewTracking.getAdapter()).getSelected();
+
+        if (selected.size() == 0) {
+            menu.findItem(R.id.action_search).setVisible(true);
+            menu.findItem(R.id.edit).setVisible(false);
+            menu.findItem(R.id.delete).setVisible(false);
+            menu.findItem(R.id.direction).setVisible(false);
+        }
+        else if (selected.size() == 1) {
+            menu.findItem(R.id.action_search).setVisible(false);
+            menu.findItem(R.id.edit).setVisible(true);
+            menu.findItem(R.id.delete).setVisible(true);
+            menu.findItem(R.id.direction).setVisible(true);
+        }
+        else {
+            menu.findItem(R.id.action_search).setVisible(true);
+            menu.findItem(R.id.edit).setVisible(true);
+            menu.findItem(R.id.delete).setVisible(true);
+            menu.findItem(R.id.direction).setVisible(true);
+        }
+    }
+
     @Override
     protected void onResume() {
         super.onResume();
@@ -154,6 +180,12 @@ public class MainActivity extends AppCompatActivity {
         trackings = DBHelper.getTrackings(getApplicationContext());
         adapter = new ListsAdapter(MainActivity.this, trackings);
         recyclerViewTracking.setAdapter(adapter);
+
+        try {
+            listChangedNotify();
+        } catch (NullPointerException e) {
+
+        }
     }
 
     @Override
@@ -164,5 +196,73 @@ public class MainActivity extends AppCompatActivity {
         } catch (RuntimeException e) {
             e.printStackTrace();
         }
+    }
+
+    @Override
+    public boolean onCreateOptionsMenu(Menu menu) {
+        this.menu = menu;
+
+        MenuInflater inflater = getMenuInflater();
+        inflater.inflate(R.menu.main_activity_actions, menu);
+
+        SearchView searchView = (SearchView) menu.findItem(R.id.action_search).getActionView();
+        searchView.setIconifiedByDefault(true);
+        searchView.setOnQueryTextListener(new SearchView.OnQueryTextListener() {
+            @Override
+            public boolean onQueryTextSubmit(String query) {
+                trackings = DBHelper.getTrackings(getApplicationContext(), query);
+                adapter = new ListsAdapter(MainActivity.this, trackings);
+                recyclerViewTracking.setAdapter(adapter);
+                listChangedNotify();
+
+                return false;
+            }
+
+            @Override
+            public boolean onQueryTextChange(String newText) {
+                return false;
+            }
+        });
+
+        searchView.setQueryHint("Title or Description");
+        searchView.setOnCloseListener(new SearchView.OnCloseListener() {
+            @Override
+            public boolean onClose() {
+                trackings = DBHelper.getTrackings(getApplicationContext());
+                adapter = new ListsAdapter(MainActivity.this, trackings);
+                recyclerViewTracking.setAdapter(adapter);
+                listChangedNotify();
+
+                return false;
+            }
+        });
+
+        menu.findItem(R.id.action_search).setVisible(true);
+        menu.findItem(R.id.edit).setVisible(false);
+        menu.findItem(R.id.delete).setVisible(false);
+        menu.findItem(R.id.direction).setVisible(false);
+
+        return super.onCreateOptionsMenu(menu);
+    }
+
+    @Override
+    public boolean onOptionsItemSelected(MenuItem item) {
+        switch (item.getItemId()) {
+            case R.id.logout :
+                if (Preferences.getInt(getApplicationContext(), Preferences.TRACKING_ID_TEMP) != -1) {
+                    Toast.makeText(getApplicationContext(), "Finish tracking first.", Toast.LENGTH_SHORT).show();
+                }
+                else {
+                    Preferences.removeAccount(getApplicationContext());
+                    Intent intent = new Intent(getApplicationContext(), LoginActivity.class);
+                    startActivity(intent);
+                    finish();
+                }
+                break;
+            default:
+                break;
+        }
+
+        return false;
     }
 }

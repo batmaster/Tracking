@@ -7,6 +7,7 @@ import android.database.Cursor;
 import android.database.sqlite.SQLiteDatabase;
 import android.database.sqlite.SQLiteOpenHelper;
 import android.location.Location;
+import android.support.annotation.Nullable;
 import android.util.Log;
 
 import com.bananalab.tracking.model.Coordinate;
@@ -161,12 +162,19 @@ public class DBHelper extends SQLiteOpenHelper {
     }
 
     public static ArrayList<Tracking> getTrackings(Context context) {
+        return getTrackings(context, "");
+    }
+
+    public static ArrayList<Tracking> getTrackings(Context context, String query) {
         DBHelper that = new DBHelper(context);
         SQLiteDatabase db = that.getReadableDatabase();
 
         ArrayList<Tracking> trackings = new ArrayList<Tracking>();
 
-        Cursor cursor = db.rawQuery(String.format("SELECT * FROM trackings ORDER BY id DESC"), null);
+        if (query == null)
+            query = "";
+
+        Cursor cursor = db.rawQuery(String.format("SELECT * FROM trackings WHERE title LIKE '%%%1$s%%' OR description LIKE '%%%1$s%%' ORDER BY id DESC", query), null);
         cursor.moveToFirst();
 
         while (!cursor.isAfterLast()) {
